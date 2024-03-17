@@ -7,7 +7,7 @@
  */
 const USER_CONFIG = {
 
-  USE_PASSAGE: 'push-deer',
+  USE_PASSAGE: 'server-chan',
   
   // 使用微信测试号：公众号APP_ID
   APP_ID: '',
@@ -38,7 +38,7 @@ const USER_CONFIG = {
     earthyLoveWords: true,
     
     // 朋友圈文案, 填 false 则不使用，按需关闭不使用的功能可以提高运行速度
-    momentCopyrighting: true,
+    momentCopyrighting: false,
     
     // 毒鸡汤, 填 false 则不使用，按需关闭不使用的功能可以提高运行速度
     poisonChickenSoup: false,
@@ -75,8 +75,6 @@ const USER_CONFIG = {
       horoscopeDate: '11-10',
       
       horoscopeDateType: '今日',
-
-      openUrl: 'https://wangxinleo.cn',
       
       festivals: [
         // 注意：此条配置日期为阴历日期，因为`type`中 “生日” 之前有 * 符号
