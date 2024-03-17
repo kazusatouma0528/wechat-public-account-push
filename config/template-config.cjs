@@ -2,7 +2,7 @@
 const TEMPLATE_CONFIG = [
   {
     id: 'cLg7C0ZeBBZQCqSrvajZzvMxL3GL3zqibkJT5oC9sAo',
-    title: '亲爱的, 早上好',
+    title: '亲爱的笨笨, 早上好',
     desc: `
       **{{date.DATA}}**
       
@@ -36,7 +36,7 @@ const TEMPLATE_CONFIG = [
     `
   },
   {
-    id: '0002',
+    id: '4nhv3hgREA770T6QL50mWWTuyDaUeKZanJX46L5u-p0',
     title: '推送完成提醒',
     desc: `
       服务器信息：{{post_time_zone.DATA}} {{post_time.DATA}}
