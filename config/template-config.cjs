@@ -1,7 +1,7 @@
 /* eslint-disable */
 const TEMPLATE_CONFIG = [
   {
-    id: '1rYZGy3peHMfjKzG1EBtm9U0fgfl7ZJTEinrT6zOqAc',
+    id: '1110',
     title: '亲爱的笨笨, 早上好',
     desc: `
       **{{date.DATA}}**
@@ -24,7 +24,7 @@ const TEMPLATE_CONFIG = [
       
       ---
       
-      今天是我们相识的第{{love_day.DATA}}天
+      今天是我们恋爱的第{{love_day.DATA}}天
       
       {{birthday_message.DATA}}
       
@@ -36,7 +36,7 @@ const TEMPLATE_CONFIG = [
     `
   },
   {
-    id: '4nhv3hgREA770T6QL50mWWTuyDaUeKZanJX46L5u-p0',
+    id: 'KeyyG7hVtqP',
     title: '推送完成提醒',
     desc: `
       服务器信息：{{post_time_zone.DATA}} {{post_time.DATA}}
