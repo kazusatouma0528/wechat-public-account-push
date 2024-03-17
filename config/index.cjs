@@ -7,8 +7,6 @@
  */
 const USER_CONFIG = {
 
-  USE_PASSAGE: 'server-chan',
-
   // 使用微信测试号：公众号APP_ID
   APP_ID: 'wx90e8ce5d456179ca',
 
@@ -31,7 +29,7 @@ const USER_CONFIG = {
       festivals: [
         // 注意：此条配置日期为阴历日期，因为`type`中 “生日” 之前有 * 符号
         {
-          type: '*生日', name: '宝贝', year: '1998', date: '11-10',
+          type: '*生日', name: '赵燕梅', year: '1998', date: '09-22',
         },
         // 注意：此条配置日期为阳历日期，因为`type`中 “生日” 之前没有 * 符号
         {
@@ -53,7 +51,7 @@ const USER_CONFIG = {
 
 
   // 【推送完成提醒】模板id, 用来看自己有没有发送成功的那个模板
-  CALLBACK_TEMPLATE_ID: '',
+  CALLBACK_TEMPLATE_ID: '4nhv3hgREA770T6QL50mWWTuyDaUeKZanJX46L5u-p0',
 
   CALLBACK_USERS: [
     {
