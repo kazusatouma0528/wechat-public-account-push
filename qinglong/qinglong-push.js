@@ -770,15 +770,23 @@ const courseScheduleService = {
   }
 }
 
+// ==================== 时间段判断（早安 / 晚安） ====================
+// 根据北京时间判断当前是「早安」时段还是「晚安」时段（GitHub Actions 运行器为 UTC，需 +8）
+// 分界点 18:00：18:00 之前视为白天（早安），18:00 及之后视为夜晚（晚安）
+function isMorningNow() {
+  const beijingHour = (new Date().getUTCHours() + 8) % 24
+  return beijingHour < 18
+}
+
 // ==================== 推送服务 ====================
 
 /**
  * 推送服务管理器
  */
 const pushService = {
-  async sendWeChatTemplate(user, templateData, accessToken) {
-    // 优先使用 wechatTemplateId，向后兼容 useTemplateId
-    const templateId = user.wechatTemplateId || user.useTemplateId
+  async sendWeChatTemplate(user, templateData, accessToken, templateIdOverride) {
+    // 优先使用传入的模板ID（晚安时段可覆盖），向后兼容 wechatTemplateId / useTemplateId
+    const templateId = templateIdOverride || user.wechatTemplateId || user.useTemplateId
 
     if (!user.id || !templateId) {
       throw new PushError('用户ID或模板ID缺失', 'MISSING_REQUIRED_FIELDS', { user: user.name })
@@ -852,9 +860,9 @@ const pushService = {
   /**
    * 智能选择推送方式
    */
-  async sendToUser(user, content, templateData, accessToken) {
+  async sendToUser(user, content, templateData, accessToken, wechatTemplateId) {
     const methods = [
-      { name: '微信', condition: accessToken && user.id, fn: () => this.sendWeChatTemplate(user, templateData, accessToken) },
+      { name: '微信', condition: accessToken && user.id, fn: () => this.sendWeChatTemplate(user, templateData, accessToken, wechatTemplateId) },
       { name: 'PushDeer', condition: user.pushDeerKey, fn: () => this.sendPushDeer(user, content) }
     ]
 
@@ -1026,19 +1034,31 @@ const dataAggregationService = {
         data.moment_copyrighting = { value: hitokoto.content }
       }
 
-      // 天行API - 早安心语（用户级配置）
-      if (user.tianApi && user.tianApi.morning) {
-        const morningGreeting = await tianApiService.getMorningGreeting(user.tianApi)
-        if (!morningGreeting.error) {
-          data.morning_greeting = { value: morningGreeting.content }
-        }
-      }
-
-      // 天行API - 晚安心语（用户级配置）
-      if (user.tianApi && user.tianApi.evening) {
-        const eveningGreeting = await tianApiService.getEveningGreeting(user.tianApi)
-        if (!eveningGreeting.error) {
-          data.evening_greeting = { value: eveningGreeting.content }
+      // 天行API - 心语（按时间段切换早安/晚安）
+      // 先初始化两个占位符，保证 key 始终存在，避免微信模板缺字段报错
+      data.morning_greeting = { value: '' }
+      data.evening_greeting = { value: '' }
+      if (user.tianApi) {
+        const wantMorning = isMorningNow()
+        const primaryEnabled = wantMorning ? user.tianApi.morning : user.tianApi.evening
+        const fallbackEnabled = wantMorning ? user.tianApi.evening : user.tianApi.morning
+        if (primaryEnabled) {
+          const g = wantMorning
+            ? await tianApiService.getMorningGreeting(user.tianApi)
+            : await tianApiService.getEveningGreeting(user.tianApi)
+          if (!g.error) {
+            if (wantMorning) data.morning_greeting = { value: g.content }
+            else data.evening_greeting = { value: g.content }
+          }
+        } else if (fallbackEnabled) {
+          // 当前时段对应功能未开启时，回退使用另一个已开启的心语
+          const g = wantMorning
+            ? await tianApiService.getEveningGreeting(user.tianApi)
+            : await tianApiService.getMorningGreeting(user.tianApi)
+          if (!g.error) {
+            if (wantMorning) data.evening_greeting = { value: g.content }
+            else data.morning_greeting = { value: g.content }
+          }
         }
       }
 
@@ -1163,15 +1183,21 @@ class PushService {
         // 获取聚合数据
         const aggregatedData = await dataAggregationService.getAggregatedData(user)
 
+        // 按时间段选择模板（早安 / 晚安）
+        const periodIsMorning = isMorningNow()
+        const useTemplateId = periodIsMorning ? user.useTemplateId : (user.useEveningTemplateId || user.useTemplateId)
+        const wechatTemplateId = periodIsMorning ? user.wechatTemplateId : (user.eveningWechatTemplateId || user.wechatTemplateId)
+        logInfo(`用户 ${user.name} 当前为${periodIsMorning ? '早安' : '晚安'}时段，使用模板 ${useTemplateId}`)
+
         // 查找模板
-        const template = ALL_CONFIG.TEMPLATE_CONFIG.find(t => t.id === user.useTemplateId) || ALL_CONFIG.TEMPLATE_CONFIG[0]
+        const template = ALL_CONFIG.TEMPLATE_CONFIG.find(t => t.id === useTemplateId) || ALL_CONFIG.TEMPLATE_CONFIG[0]
 
         // 处理模板数据
         const isWeChatTest = !!(this.accessToken && user.id)
         const { desc } = templateService.processTemplate(template, aggregatedData, isWeChatTest, user.showColor)
 
         // 发送推送
-        const sendResult = await pushService.sendToUser(user, desc, aggregatedData, this.accessToken)
+        const sendResult = await pushService.sendToUser(user, desc, aggregatedData, this.accessToken, wechatTemplateId)
 
         if (sendResult.success) {
           successCount++
