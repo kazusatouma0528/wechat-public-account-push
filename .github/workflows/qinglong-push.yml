@@ -16,18 +16,18 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [20.x]
 
     steps:
     # 步骤 1: 检出代码
     - name: 检出代码
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: 'master'
 
     # 步骤 2: 设置 Node.js 环境
     - name: 设置 Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -135,6 +135,10 @@ jobs:
           echo "❌ 青龙微信推送任务执行失败"
           echo "🔍 请检查："
           echo "   1. GitHub Secrets 中的 ALL_CONFIG 配置是否正确"
+          echo "   2. 模板配置和用户配置是否完整"
+          echo "   3. API 密钥和网络连接是否正常"
+          echo "   4. 查看上方详细错误信息进行排查"
+        fi
           echo "   2. 模板配置和用户配置是否完整"
           echo "   3. API 密钥和网络连接是否正常"
           echo "   4. 查看上方详细错误信息进行排查"
