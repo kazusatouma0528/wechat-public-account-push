@@ -167,8 +167,10 @@ const validateUserConfig = (user, index) => {
     user.tianApi.weatherDays = user.tianApi.weatherDays === true
     user.tianApi.hotCount = Math.max(0, parseInt(user.tianApi.hotCount, 10) || 0)
     user.tianApi.hotType = user.tianApi.hotType === 'title' ? 'title' : 'default'
+    user.tianApi.riddle = user.tianApi.riddle === true
+    user.tianApi.ensentence = user.tianApi.ensentence === true
 
-    logInfo(`用户 ${user.name} 已配置 TIAN_API 功能：早安心语=${user.tianApi.morning}, 晚安心语=${user.tianApi.evening}, 天行天气=${user.tianApi.weatherDays}, 热搜条数=${user.tianApi.hotCount}`)
+    logInfo(`用户 ${user.name} 已配置 TIAN_API 功能：早安心语=${user.tianApi.morning}, 晚安心语=${user.tianApi.evening}, 天行天气=${user.tianApi.weatherDays}, 热搜条数=${user.tianApi.hotCount}, 谜语=${user.tianApi.riddle}, 英语一句话=${user.tianApi.ensentence}`)
   } else {
     logInfo(`用户 ${user.name} 未配置 TIAN_API 功能，相关功能将不启用`)
   }
@@ -358,7 +360,7 @@ const validateTemplateConfig = () => {
     const validVariables = ['date', 'city', 'weather', 'max_temperature', 'min_temperature',
       'wind_direction', 'wind_scale', 'love_day', 'birthday_message', 'moment_copyrighting',
       'morning_greeting', 'evening_greeting', 'tian_weather', 'network_hot', 'today_courses',
-      'chinese_note', 'english_note']
+      'chinese_note', 'english_note', 'riddle', 'ensentence']
 
     const templateVars = template.desc.match(/\{\{([^}]+)\.DATA\}\}/g) || []
     templateVars.forEach(varMatch => {
@@ -615,6 +617,66 @@ const tianApiService = {
       }
     } catch (error) {
       return { error: `获取全网热搜榜失败：${error.message}` }
+    }
+  },
+
+  /**
+   * 获取谜语大全
+   */
+  async getRiddle(userTianApi) {
+    if (!CONFIG.TIAN_API_KEY || !userTianApi || !user.tianApi.riddle) {
+      return { error: '天行API未配置或谜语功能未启用' }
+    }
+
+    try {
+      const data = await withRetry(async () => {
+        return httpClient.get(`https://apis.tianapi.com/riddle/index?key=${CONFIG.TIAN_API_KEY}`)
+      }, '获取谜语大全')
+
+      if (data && data.code === 200 && data.result) {
+        const item = (Array.isArray(data.result.list) && data.result.list[0]) || data.result
+        const content = item.quest ?? item.content ?? item.question ?? item.riddle
+        const answer = item.answer ?? item.result
+        let text = ''
+        if (content != null) text += `🧩 谜面：${content}`
+        if (answer != null) text += (text ? '\n' : '') + `💡 谜底：${answer}`
+        if (!text) text = JSON.stringify(item)
+        return { content: text }
+      } else {
+        return { error: '获取谜语大全失败' }
+      }
+    } catch (error) {
+      return { error: `获取谜语大全失败：${error.message}` }
+    }
+  },
+
+  /**
+   * 获取英语一句话
+   */
+  async getEnSentence(userTianApi) {
+    if (!CONFIG.TIAN_API_KEY || !userTianApi || !user.tianApi.ensentence) {
+      return { error: '天行API未配置或英语一句话功能未启用' }
+    }
+
+    try {
+      const data = await withRetry(async () => {
+        return httpClient.get(`https://apis.tianapi.com/ensentence/index?key=${CONFIG.TIAN_API_KEY}`)
+      }, '获取英语一句话')
+
+      if (data && data.code === 200 && data.result) {
+        const item = (Array.isArray(data.result.list) && data.result.list[0]) || data.result
+        const en = item.en ?? item.english
+        const zh = item.zh ?? item.cn
+        let text = ''
+        if (en != null) text += en
+        if (zh != null) text += (text ? '\n' : '') + zh
+        if (!text) text = JSON.stringify(item)
+        return { content: text }
+      } else {
+        return { error: '获取英语一句话失败' }
+      }
+    } catch (error) {
+      return { error: `获取英语一句话失败：${error.message}` }
     }
   }
 }
@@ -1003,6 +1065,22 @@ const dataAggregationService = {
               value: networkHot.list.map(h => `${h.index}. ${h.title}\n   ${h.desc || ''}`).join('\n\n')
             }
           }
+        }
+      }
+
+      // 天行API - 谜语大全（用户级配置）
+      if (user.tianApi && user.tianApi.riddle) {
+        const riddle = await tianApiService.getRiddle(user.tianApi)
+        if (!riddle.error) {
+          data.riddle = { value: riddle.content }
+        }
+      }
+
+      // 天行API - 英语一句话（用户级配置）
+      if (user.tianApi && user.tianApi.ensentence) {
+        const enSentence = await tianApiService.getEnSentence(user.tianApi)
+        if (!enSentence.error) {
+          data.ensentence = { value: enSentence.content }
         }
       }
 
