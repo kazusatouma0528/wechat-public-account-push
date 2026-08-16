@@ -125,21 +125,18 @@ jobs:
         ALL_CONFIG: ${{ secrets.ALL_CONFIG || vars.ALL_CONFIG }}
 
     # 步骤 6: 运行结果通知
-    - name: 运行结果通知
-      if: always()
+    - name: 推送成功通知
+      if: success()
       run: |
-        if [ "${{ job.status }}" == "success" ]; then
-          echo "✅ 青龙微信推送任务执行成功！"
-          echo "📱 请检查您的微信或 PushDeer 设备接收推送消息"
-        else
-          echo "❌ 青龙微信推送任务执行失败"
-          echo "🔍 请检查："
-          echo "   1. GitHub Secrets 中的 ALL_CONFIG 配置是否正确"
-          echo "   2. 模板配置和用户配置是否完整"
-          echo "   3. API 密钥和网络连接是否正常"
-          echo "   4. 查看上方详细错误信息进行排查"
-        fi
-          echo "   2. 模板配置和用户配置是否完整"
-          echo "   3. API 密钥和网络连接是否正常"
-          echo "   4. 查看上方详细错误信息进行排查"
-        fi
+        echo "✅ 青龙微信推送任务执行成功！"
+        echo "📱 请检查您的微信或 PushDeer 设备接收推送消息"
+
+    - name: 推送失败通知
+      if: failure()
+      run: |
+        echo "❌ 青龙微信推送任务执行失败"
+        echo "🔍 请检查："
+        echo "1. GitHub Secrets 中的 ALL_CONFIG 配置是否正确"
+        echo "2. 模板配置和用户配置是否完整"
+        echo "3. API 密钥和网络连接是否正常"
+        echo "4. 查看上方详细错误信息进行排查"
