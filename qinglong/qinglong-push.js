@@ -624,7 +624,7 @@ const tianApiService = {
    * 获取谜语大全
    */
   async getRiddle(userTianApi) {
-    if (!CONFIG.TIAN_API_KEY || !userTianApi || !user.tianApi.riddle) {
+    if (!CONFIG.TIAN_API_KEY || !userTianApi || !userTianApi.riddle) {
       return { error: '天行API未配置或谜语功能未启用' }
     }
 
@@ -654,7 +654,7 @@ const tianApiService = {
    * 获取英语一句话
    */
   async getEnSentence(userTianApi) {
-    if (!CONFIG.TIAN_API_KEY || !userTianApi || !user.tianApi.ensentence) {
+    if (!CONFIG.TIAN_API_KEY || !userTianApi || !userTianApi.ensentence) {
       return { error: '天行API未配置或英语一句话功能未启用' }
     }
 
