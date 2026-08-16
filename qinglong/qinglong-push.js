@@ -800,6 +800,13 @@ const pushService = {
       data: templateData
     }
 
+    // 调试：打印发给微信的完整 data 对象，确认每个字段是否都有值
+    logInfo(`[DEBUG] 发送给微信的模板数据字段数: ${Object.keys(templateData || {}).length}`)
+    for (const [k, v] of Object.entries(templateData || {})) {
+      const valStr = (v && v.value) ? String(v.value).slice(0, 60) : '(空/未定义)'
+      logInfo(`[DEBUG]   ${k} = ${valStr}`)
+    }
+
     const result = await httpClient.post(
       `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${accessToken}`,
       data
